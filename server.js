@@ -22,7 +22,8 @@ const s3Client = new S3Client({
     }
 });
 const BUCKET_NAME = 'guess-melody-tracks';
-
+const publicUrl = `https://storage.yandexcloud.net/${BUCKET_NAME}/${selectedTrack.path}`;
+io.to(roomId).emit('newRound', { trackSrc: publicUrl });
 let tracks = [
     { id: 1, path: 'Оптимист.mp3', correctTitle: 'Оптимист', correctArtist: 'Макс Корж' },
     { id: 2, path: 'Алиса.mp3', correctTitle: 'Алиса', correctArtist: 'Мукка' },
