@@ -1,28 +1,70 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const { S3Client, ListObjectsV2Command, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-    cors: { origin: '*' } // Для тестов, потом можно ограничить
-});
+const io = socketIo(server, { cors: { origin: '*' } });
 
-// Статические файлы (frontend, музыка)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Массив треков
-const tracks = [
-    { 
-        id: 1, 
-        src: '/music/Оптимист.mp3', 
-        correctTitle: 'Оптимист', 
-        correctArtist: 'Макс Корж' 
-    },
-    // добавляй остальные треки сюда
-];
+const s3Client = new S3Client({
+    region: 'ru-central1',
+    endpoint: 'https://storage.yandexcloud.net',
+    credentials: {
+        accessKeyId: process.env.ACCESS_KEY_ID,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY
+    }
+});
+const BUCKET_NAME = 'guess-melody-tracks';
 
+let tracks = [
+    { id: 1, path: 'Оптимист.mp3', correctTitle: 'Оптимист', correctArtist: 'Макс Корж' },
+    { id: 2, path: 'Алиса.mp3', correctTitle: 'Алиса', correctArtist: 'Мукка' },
+    { id: 3, path: 'Выхода нет.mp3', correctTitle: 'Выхода нет', correctArtist: 'Сплин' },
+    { id: 4, path: 'Знаешь ли ты.mp3', correctTitle: 'Знаешь ли ты', correctArtist: 'Максим' },
+    { id: 5, path: 'Олимп.mp3', correctTitle: 'Олимп', correctArtist: 'Даник' },
+    { id: 6, path: 'Отпускай.mp3', correctTitle: 'Отпускай', correctArtist: 'Три дня дождя' },
+    { id: 7, path: 'Перезарежай.mp3', correctTitle: 'Перезарежай', correctArtist: 'Три дня дождя' },
+    { id: 8, path: 'Последня любовь.mp3', correctTitle: 'Последняя любовь', correctArtist: 'Моргенштерн' },
+    { id: 9, path: 'Приснится.mp3', correctTitle: 'Приснится', correctArtist: 'Даник' },
+    { id: 10, path: 'Нон стоп.mp3', correctTitle: 'Нон стоп', correctArtist: 'Пошлая Молли' },
+    // Добавь 100+ объектов, аналогично: { id: 2, path: 'track2.mp3', correctTitle: '...', correctArtist: '...' }
+    // ...];
+]
+
+// Функция загрузки списка треков из бакета
+async function loadTracksFromBucket() {
+    try {
+        const command = new ListObjectsV2Command({
+            Bucket: BUCKET_NAME,
+            // Prefix: 'music/'  // если все треки в подпапке music/
+        });
+
+        const response = await s3Client.send(command);
+
+        tracks = (response.Contents || [])
+            .filter(obj => obj.Key.endsWith('.mp3'))
+            .map((obj, index) => ({
+                id: index + 1,
+                path: obj.Key,
+                correctTitle: obj.Key.replace('.mp3', '').split(' - ')[1] || obj.Key.replace('.mp3', ''),
+                correctArtist: obj.Key.replace('.mp3', '').split(' - ')[0] || 'Неизвестен'
+            }));
+
+        console.log(`Загружено ${tracks.length} треков из Yandex Cloud`);
+    } catch (err) {
+        console.error('Ошибка загрузки списка треков из Yandex:', err);
+    }
+}
+
+// Вызываем при запуске сервера
+loadTracksFromBucket();
 // Комнаты
 const rooms = {};
 
@@ -42,24 +84,25 @@ io.on('connection', (socket) => {
         socket.emit('joined', { roomId, players: rooms[roomId].players });
     });
 
-    // Старт игры (хост)
-    socket.on('startGame', (roomId) => {
-        const room = rooms[roomId];
-        if (!room) {
-            console.log(`Попытка старта несуществующей комнаты: ${roomId}`);
-            return;
-        }
-        if (room.gameState !== 'waiting') {
-            console.log(`Попытка старта комнаты не в состоянии waiting: ${roomId} (${room.gameState})`);
-            return;
-        }
+    socket.on('startGame', async (roomId) => {  // ← добавь async
+    const room = rooms[roomId];
+    if (!room) {
+        console.log(`Попытка старта несуществующей комнаты: ${roomId}`);
+        return;
+    }
+    if (room.gameState !== 'waiting') {
+        console.log(`Попытка старта комнаты не в состоянии waiting: ${roomId} (${room.gameState})`);
+        return;
+    }
 
-        room.gameState = 'playing';
-        room.round = 0;
-        startNewRound(roomId);
+    room.gameState = 'playing';
+    room.round = 0;
 
-        io.to(roomId).emit('gameStarted');
-    });
+    io.to(roomId).emit('gameStarted');  // сразу говорим клиентам, что игра началась
+
+    // Запускаем первый раунд асинхронно
+    await startNewRound(roomId);  // ← await здесь!
+});
 
     // Запрос на ответ (кто быстрее нажал)
     socket.on('requestAnswer', (roomId) => {
@@ -142,8 +185,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Функция должна быть ВНЕ io.on('connection')
-function startNewRound(roomId) {
+async function startNewRound(roomId) {
     const room = rooms[roomId];
     
     if (!room || room.gameState !== 'playing') {
@@ -159,26 +201,47 @@ function startNewRound(roomId) {
         return;
     }
 
-    room.currentTrack = tracks[Math.floor(Math.random() * tracks.length)];
-    room.currentPlayerTurn = null;
+    if (tracks.length === 0) {
+        console.warn('Нет треков для раунда');
+        io.to(roomId).emit('newRound', { trackSrc: '/music/fallback.mp3' });
+        return;
+    }
 
-    io.to(roomId).emit('newRound', { 
-        trackSrc: room.currentTrack.src,
-        title: room.currentTrack.correctTitle,
-        artist: room.currentTrack.correctArtist
-    });
+    const selectedTrack = tracks[Math.floor(Math.random() * tracks.length)];
 
-    console.log(`Новый раунд ${room.round} в комнате ${roomId}, трек: ${room.currentTrack.src}`);
+    console.log(`Генерация signed URL для трека: ${selectedTrack.path}`);
 
+    try {
+        // Создаём команду GetObject
+        const command = new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: selectedTrack.path
+        });
+
+        // Генерируем подписанную ссылку (1 час действия)
+        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+        room.currentTrack = { ...selectedTrack, src: signedUrl };
+
+        io.to(roomId).emit('newRound', { trackSrc: signedUrl });
+
+        console.log(`Signed URL успешно сгенерирован и отправлен клиентам для трека ${selectedTrack.path}`);
+    } catch (err) {
+        console.error('Ошибка или таймаут при генерации URL для трека', selectedTrack.path, ':', err.message || err);
+
+        // Fallback на локальный файл (если есть)
+        io.to(roomId).emit('newRound', { trackSrc: '/music/fallback.mp3' });
+    }
+
+    // Таймер на раунд 30 секунд
     setTimeout(() => {
         if (rooms[roomId] && rooms[roomId].gameState === 'playing' && rooms[roomId].currentPlayerTurn === null) {
             io.to(roomId).emit('roundTimeout');
-            setTimeout(() => {
             startNewRound(roomId);
-        }, 4000);
-    }
-}, 30000);
         }
+    }, 30000);
+}
+        
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Сервер на порту ${PORT}`));

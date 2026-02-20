@@ -116,32 +116,28 @@ function updatePlayers(players) {
 
 // Когда начинается новый раунд
 socket.on('newRound', (data) => {
+    console.log('Получен newRound. URL трека:', data.trackSrc);  // ← лог URL
+
     if (!data.trackSrc) {
-        console.warn('Не получен URL трека');
-        // Можно показать сообщение игрокам
-        messagesDiv.innerHTML += '<p style="color:red;">Ошибка загрузки трека, следующий раунд...</p>';
+        console.warn('URL трека пустой');
+        messagesDiv.innerHTML += '<p style="color:red;">Трек не загружен</p>';
         return;
     }
 
     audioPlayer.src = data.trackSrc;
-    audioPlayer.play().catch(e => console.log("Автопроигрывание заблокировано:", e));
-    audioPlayer.src = data.trackSrc;
-    audioPlayer.play().catch(e => console.log("Автопроигрывание заблокировано:", e));
-    
-    // Сброс кнопки "Ответить" — самое важное
+    console.log('Установлен src аудио:', audioPlayer.src);
+
+    audioPlayer.play()
+        .then(() => console.log('Аудио успешно запустилось'))
+        .catch(err => {
+            console.error('Ошибка play():', err.message || err);
+            // Показываем пользователю
+            messagesDiv.innerHTML += '<p style="color:orange;">Кликни по странице, чтобы включить звук</p>';
+        });
+
     answerBtn.style.display = 'block';
-    answerBtn.disabled = false;
-    answerBtn.textContent = 'Ответить';          // ← возвращаем нормальный текст
-    answerBtn.classList.add('pulse-active');
     answerForm.style.display = 'none';
     document.getElementById('track-info').innerHTML = 'Слушайте отрывок... 🎵';
-    document.getElementById('timer').style.display = 'none';  // скрываем таймер
-    
-    if (answerTimer) {
-        clearInterval(answerTimer);
-        answerTimer = null;
-    }
-    
     messagesDiv.innerHTML += '<p>Новый раунд начался!</p>';
 });
 
