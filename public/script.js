@@ -1,5 +1,22 @@
 const socket = io();
 const tg = window.Telegram.WebApp; // Telegram интеграция
+let audioContextUnlocked = false;
+
+function unlockAudioContext() {
+    if (audioContextUnlocked) return;
+    audioContextUnlocked = true;
+
+    // Создаём "пустой" звук для разблокировки аудио-контекста
+    const silentAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+    silentAudio.play().catch(() => {});
+    silentAudio.pause();
+
+    console.log('Аудио-контекст разблокирован после клика');
+}
+
+// Разблокируем при первом клике/тапе по странице
+document.addEventListener('click', unlockAudioContext, { once: true });
+document.addEventListener('touchstart', unlockAudioContext, { once: true });
 tg.ready(); // Инициализация Mini App
 tg.expand(); // Полноэкранный режим
 
@@ -127,13 +144,14 @@ socket.on('newRound', (data) => {
     audioPlayer.src = data.trackSrc;
     console.log('Установлен src аудио:', audioPlayer.src);
 
-    audioPlayer.play()
-        .then(() => console.log('Аудио успешно запустилось'))
-        .catch(err => {
-            console.error('Ошибка play():', err.message || err);
-            // Показываем пользователю
-            messagesDiv.innerHTML += '<p style="color:orange;">Кликни по странице, чтобы включить звук</p>';
-        });
+   audioPlayer.play()
+    .then(() => console.log('Трек запущен'))
+    .catch(err => {
+        console.error('Ошибка воспроизведения:', err);
+        if (err.name === 'NotAllowedError') {
+            messagesDiv.innerHTML += '<p style="color:#f39c12; font-weight:bold; margin-top:10px;">Нажми ещё раз по экрану, чтобы включить звук</p>';
+        }
+    });
 
     answerBtn.style.display = 'block';
     answerForm.style.display = 'none';
