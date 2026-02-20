@@ -116,6 +116,15 @@ function updatePlayers(players) {
 
 // Когда начинается новый раунд
 socket.on('newRound', (data) => {
+    if (!data.trackSrc) {
+        console.warn('Не получен URL трека');
+        // Можно показать сообщение игрокам
+        messagesDiv.innerHTML += '<p style="color:red;">Ошибка загрузки трека, следующий раунд...</p>';
+        return;
+    }
+
+    audioPlayer.src = data.trackSrc;
+    audioPlayer.play().catch(e => console.log("Автопроигрывание заблокировано:", e));
     audioPlayer.src = data.trackSrc;
     audioPlayer.play().catch(e => console.log("Автопроигрывание заблокировано:", e));
     
