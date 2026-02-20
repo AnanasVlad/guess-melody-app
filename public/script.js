@@ -36,6 +36,7 @@ const messagesDiv = document.getElementById('messages');
 const correctSound = document.getElementById('correct-sound');
 const wrongSound = document.getElementById('wrong-sound');
 const newGameBtn = document.getElementById('new-game-btn');
+const unlockSoundBtn = document.getElementById('unlock-sound-btn');
 let currentRoomId = null;   // ← вот эту строку добавляем
 let isHost = false;          // будем устанавливать true только для первого игрока
 let answerTimer = null;
@@ -134,7 +135,13 @@ function updatePlayers(players) {
 // Когда начинается новый раунд
 socket.on('newRound', (data) => {
     console.log('Получен newRound. URL трека:', data.trackSrc);  // ← лог URL
-
+    audioPlayer.play().catch(() => {
+        unlockSoundBtn.style.display = 'block';
+        unlockSoundBtn.addEventListener('click', () => {
+    audioPlayer.play().catch(() => {});
+    unlockSoundBtn.style.display = 'none';
+});
+    });
     if (!data.trackSrc) {
         console.warn('URL трека пустой');
         messagesDiv.innerHTML += '<p style="color:red;">Трек не загружен</p>';
@@ -170,6 +177,7 @@ socket.on('correctAnswer', (data) => {
 });
 
 answerBtn.addEventListener('click', () => {
+    unlockAudioContext();  // разблокируем
     if (!currentRoomId) return;
     socket.emit('requestAnswer', currentRoomId);
     // сразу блокируем кнопку у себя (на всякий случай)
