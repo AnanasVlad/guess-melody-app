@@ -1,0 +1,173 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+button {
+    padding: 14px 28px;
+    margin: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+button.primary {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+    color: white;
+}
+
+button.primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255,107,107,0.5);
+}
+
+button.secondary {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.4);
+}
+
+button.secondary:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+input {
+    padding: 14px;
+    margin: 10px 0;
+    width: 80%;
+    max-width: 320px;
+    border-radius: 50px;
+    border: none;
+    font-size: 1rem;
+    text-align: center;
+}
+
+#game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;          /* ← это центрирует всё по горизонтали */
+    justify-content: center;      /* опционально — вертикально по центру */
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#start-game-btn,
+#answer-btn,
+#submit-answer {
+    width: 220px;                 /* фиксированная ширина для красоты */
+    max-width: 80%;               /* на маленьких экранах не вылезет */
+    margin: 15px auto;            /* дополнительный отступ сверху/снизу и авто-центр */
+    padding: 16px 32px;           /* чуть больше для удобства на телефоне */
+}
+
+/* Если хочешь, чтобы кнопки были ещё заметнее по центру */
+.primary {
+    min-width: 180px;
+}
+
+#players, #messages {
+    background: rgba(0,0,0,0.2);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    width: 100%;
+}
+
+#timer {
+    width: 80%;
+    max-width: 400px;
+}
+
+#progress-bar {
+    transition: width 1s linear, background 0.5s;
+}
+
+.answer-status {
+    font-size: 1.4rem;
+    margin: 20px 0;
+    min-height: 50px;
+}
+
+/* Анимация появления */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease-out;
+
+    .progress-container {
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    height: 12px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255, 107, 107, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+}
+
+.pulse-active {
+    animation: pulse 2s infinite;
+}
+
+.score-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    font-weight: bold;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s, transform 0.8s;
+    z-index: 10;
+}
+
+.score-popup.show {
+    opacity: 1;
+    transform: translate(-50%, -80%);
+}
+
+.score-positive { color: #27ae60; text-shadow: 0 0 20px #27ae60; }
+.score-negative { color: #e74c3c; text-shadow: 0 0 20px #e74c3c; }
+}

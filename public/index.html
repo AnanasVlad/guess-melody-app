@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Угадай мелодию</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script> <!-- Socket.io клиент -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script> <!-- Telegram API -->
+</head>
+<body>
+    <div class="container">
+        <h1>Угадай мелодию</h1>
+
+        <div id="room-setup">
+            <input id="room-id" placeholder="ID комнаты (или пусто для новой)">
+            <input id="player-name" placeholder="Ваше имя">
+            <button id="join-btn" class="primary">Присоединиться</button>
+        </div>
+        <div id="score-popup" class="score-popup"></div>
+        <div id="game" style="display:none;">
+            <div id="players"></div>
+            <button id="start-game-btn" class="primary" style="display:none;">Старт игры</button>
+            <div id="score-popup" class="score-popup"></div>
+            <audio id="audio-player" autoplay></audio>
+            
+            <div id="track-info" class="fade-in">Ожидание...</div>
+            
+            <div id="timer" style="display:none;">
+                <div>Осталось: <span id="time-left">15</span> сек</div>
+                <div class="progress-container">
+                    <div id="progress-bar"></div>
+                </div>
+            </div>
+            <button id="new-game-btn" class="primary" style="display:none;">Новая игра</button>
+            <button id="answer-btn" class="primary" style="display:none;">Ответить</button>
+            
+            <div id="answer-form" style="display:none;">
+                <input id="answer-input" placeholder="Название или исполнитель">
+                <button id="submit-answer" class="primary">Отправить</button>
+            </div>
+            
+            <div id="answer-status" class="answer-status"></div>
+            <div id="messages"></div>
+            <audio id="correct-sound" src="/sounds/correct.mp3"></audio>
+            <audio id="wrong-sound" src="/sounds/wrong.mp3"></audio>
+        </div>
+    </div>
+
+    <!-- скрипты в конце -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
