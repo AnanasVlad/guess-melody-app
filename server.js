@@ -10,6 +10,8 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: '*' } });
+const publicUrl = `https://storage.yandexcloud.net/${BUCKET_NAME}/${encodeURIComponent(selectedTrack.path)}`;
+io.to(roomId).emit('newRound', { trackSrc: publicUrl });
 
 app.use(express.static(path.join(__dirname, 'public')));
 

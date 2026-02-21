@@ -23,12 +23,13 @@
         <div id="score-popup" class="score-popup"></div>
         <div id="game" style="display:none;">
             <div id="players"></div>
-            <button id="unlock-sound-btn" style="display:none; background:#27ae60; color:white; padding:12px 24px; border-radius:30px; margin:15px;">
-    Включить звук 🎧
-</button>
+            <button id="sound-toggle-btn" style="position: absolute; top: 15px; left: 15px; background: rgba(39,174,96,0.9); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100; transition: all 0.3s;">
+        🔊
+    </button>
             <button id="start-game-btn" class="primary" style="display:none;">Старт игры</button>
             <div id="score-popup" class="score-popup"></div>
             <audio id="audio-player" autoplay></audio>
+            <audio id="audio-player" preload="auto" type="audio/mpeg"></audio>
             
             <div id="track-info" class="fade-in">Ожидание...</div>
             
