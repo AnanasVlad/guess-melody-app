@@ -14,6 +14,7 @@ const publicUrl = `https://storage.yandexcloud.net/${BUCKET_NAME}/${encodeURICom
 io.to(roomId).emit('newRound', { trackSrc: publicUrl });
 
 app.use(express.static(path.join(__dirname, 'public')));
+const BUCKET_NAME = 'guess-melody-tracks';
 
 const s3Client = new S3Client({
     region: 'ru-central1',
@@ -23,7 +24,6 @@ const s3Client = new S3Client({
         secretAccessKey: process.env.SECRET_ACCESS_KEY
     }
 });
-const BUCKET_NAME = 'guess-melody-tracks';
 
 let tracks = [
     { id: 1, path: 'Оптимист.mp3', correctTitle: 'Оптимист', correctArtist: 'Макс Корж' },
